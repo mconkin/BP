@@ -1,6 +1,8 @@
 // debug.c
 // the actual debugging functions
 
+#ifdef DEBUG
+
 #include <stdio.h>
 
 #include "debug.h"
@@ -18,3 +20,5 @@ void miss_split(long long int miss) {
 		pmiss = miss;
 	}
 }
+
+#endif
