@@ -1,5 +1,11 @@
 
-Convenience tools for the COEN 313 Branch Prediction project.
+Convenience tool for the COEN 313 Branch Prediction project.
+
+Gets the number of misses for every N direction branches
+
+USAGE: make the project and run ./predict ../traces/<any trace file>
+
+You can see the example output in the results/ folder
 
 If you'd like to run the code normally, remove the `-DDEBUG` flag from
 your src/Makefile
