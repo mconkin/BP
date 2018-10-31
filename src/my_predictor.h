@@ -6,7 +6,8 @@
 
 class my_update : public branch_update {
 public:
-	unsigned int index;
+	unsigned int gshare_index;
+	unsigned int local_index;
 };
 
 class my_predictor : public branch_predictor {
@@ -16,19 +17,42 @@ public:
 	my_update u;
 	branch_info bi;
 	unsigned int history;
-	unsigned char tab[1<<TABLE_BITS];
+	unsigned char tournament;
 
-	my_predictor (void) : history(0) { 
-		memset (tab, 0, sizeof (tab));
+	unsigned char gshare[1<<TABLE_BITS];
+	unsigned char gshare_prediction;
+
+	unsigned char local[1<<TABLE_BITS];
+	unsigned char local_prediction;
+
+	my_predictor (void) : history(0), tournament(2) { 
+		memset (gshare, 0, sizeof (gshare));
+		memset (local, 0, sizeof (local));
 	}
 
 	branch_update *predict (branch_info & b) {
+		
 		bi = b;
 		if (b.br_flags & BR_CONDITIONAL) {
-			u.index = 
+
+			// compute gshare
+			u.gshare_index = 
 				  (history << (TABLE_BITS - HISTORY_LENGTH)) 
 				^ (b.address & ((1<<TABLE_BITS)-1));
-			u.direction_prediction (tab[u.index] >> 1);
+			gshare_prediction = gshare[u.gshare_index] >> 1;
+			
+			// compute local
+			u.local_index = 
+				  (b.address & ((1<<TABLE_BITS)-1));
+			local_prediction = local[u.local_index] >> 1;
+
+		
+			// choose the predictor
+			if (tournament >> 1) {
+				u.direction_prediction (gshare_prediction);
+			} else {
+				u.direction_prediction (local_prediction);
+			}
 		} else {
 			u.direction_prediction (true);
 		}
@@ -38,7 +62,9 @@ public:
 
 	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
-			unsigned char *c = &tab[((my_update*)u)->index];
+
+			// update ghare
+			unsigned char *c = &gshare[((my_update*)u)->gshare_index];
 			if (taken) {
 				if (*c < 3) (*c)++;
 			} else {
@@ -47,6 +73,21 @@ public:
 			history <<= 1;
 			history |= taken;
 			history &= (1<<HISTORY_LENGTH)-1;
+
+			//update local 
+			c = &local[((my_update*)u)->local_index];
+			if (taken) {
+				if (*c < 3) (*c)++;
+			} else {
+				if (*c > 0) (*c)--;
+			}
+
+			//update tournament
+			if (taken != (bool) local_prediction && taken == (bool) gshare_prediction) {
+				if (tournament < 3) (tournament)++;
+			} else if (taken == (bool) local_prediction && taken != (bool) gshare_prediction) {
+				if (tournament > 0) (tournament)--;
+			}
 		}
 	}
 };
