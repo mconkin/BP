@@ -14,8 +14,10 @@ class my_predictor : public branch_predictor {
 public:
 #define HISTORY_LENGTH	15
 #define TABLE_BITS	15
+
 	my_update u;
 	branch_info bi;
+
 	unsigned int history;
 	unsigned char tournament;
 
@@ -83,9 +85,14 @@ public:
 			}
 
 			//update tournament
-			if (taken != (bool) local_prediction && taken == (bool) gshare_prediction) {
+			if (taken != (bool) local_prediction 
+				&& taken == (bool) gshare_prediction) {
+				
 				if (tournament < 3) (tournament)++;
-			} else if (taken == (bool) local_prediction && taken != (bool) gshare_prediction) {
+			}
+			 else if (taken == (bool) local_prediction 
+				&& taken != (bool) gshare_prediction) {
+				
 				if (tournament > 0) (tournament)--;
 			}
 		}
